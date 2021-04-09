@@ -36,8 +36,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:/Users/Kinson/Documents/GitHub/json-20201115.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Kinson/Documents/GitHub/commons-io-2.8.0/commons-io-2.8.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Kinson/Documents/GitHub/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="src/main/resources/commons-io-2.8.0.jar"/>
+	<classpathentry kind="lib" path="src/main/resources/json-20201115.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
