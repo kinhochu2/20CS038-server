@@ -36,9 +36,8 @@ public class DistanceUtil {
 		}
 	}
 	
-	public Date addTime(Date date, double min) {
+	public static Date addTime(double min) {
 		Calendar cal = Calendar.getInstance();
-		cal.setTime(date);               		// sets calendar time/date
 		cal.add(Calendar.MINUTE, (int)min);
 		return cal.getTime();                         	// returns new date object plus the minutes added
 	}

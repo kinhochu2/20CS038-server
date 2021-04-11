@@ -1,6 +1,7 @@
 package cityu.cs.fyp.service.tracking;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple3;
+import org.web3j.tuples.generated.Tuple5;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
@@ -35,12 +37,14 @@ public class TrackingService {
 		double lat;
 		double lng;
 		double dist;
+		double distToStart;
 		
-		public Location(String name, double lat, double lng, double dist) {
+		public Location(String name, double lat, double lng, double dist, double distToStart) {
 			this.name = name;
 			this.lat = lat;
 			this.lng = lng;
 			this.dist = dist;
+			this.distToStart = distToStart;
 		}
 	}
 
@@ -59,14 +63,16 @@ public class TrackingService {
 	}
 	
 	public static JSONObject getShipmentDetails(JSONObject response, String id) {
-		Tuple3<String, String, String> result = null;
+		Tuple5<String, String, String, BigInteger, String> result = null;
 		Boolean hasError = false;
 		JSONObject obj = new JSONObject();
 		try {
 			result = contractCtrl.getShipmentDetails(id);
-			response.put("itemId", result.component1());
-			response.put("sellerLocation", result.component2());
-			response.put("buyerLocation", result.component3());
+			response.put("sellerLocation", result.component1());
+			response.put("buyerLocation", result.component2());
+			response.put("distance", result.component3());
+			response.put("time", result.component4());
+			response.put("eta", result.component5());
 			JSONObject waypoints = TrackingService.getShipmentWaypoints(response, id);
 			response.put("waypointSet", waypoints.get("hasWaypointSet"));
 			
@@ -79,11 +85,11 @@ public class TrackingService {
 	}
 	
 	public static JSONObject createShipement(JSONObject response, String itemId, String sName
-			, String eName, String distance, String time) {
+			, String eName) {
 		String gasUsed = "";
 		Boolean hasError = false;
 		try {
-			gasUsed = contractCtrl.createShipment(itemId, sName, eName, distance, time);
+			gasUsed = contractCtrl.createShipment(itemId, sName, eName);
 			int shipmentId = contractCtrl.getShipmentId();
 			System.out.println("createShipement, shipmentId: "+shipmentId);
 			response.put("shipmentId", shipmentId);
@@ -99,7 +105,7 @@ public class TrackingService {
 	public static int createShipement(String itemId, String sellerLocation, String buyerLocation) {
 		int id = -1;
 		try {
-			contractCtrl.createShipment(itemId, sellerLocation, buyerLocation, "empty", "empty");
+			contractCtrl.createShipment(itemId, sellerLocation, buyerLocation);
 			id = contractCtrl.getShipmentId();
 			System.out.println("createShipement, shipmentId: "+id);
 		} catch (Exception e) {
@@ -108,25 +114,55 @@ public class TrackingService {
 		return id;
 	}
 	
-	public static JSONObject addWaypointToRoute(JSONObject response, String id, String name1, String name2, String name3, String count) {
+	public static JSONObject addWaypointToRoute(JSONObject response, String id, String name1, String name2, String name3, String count, String start, String end, String mph) {
 		Boolean hasError = false;
+		double distance = 0.0;
+		double time = 0.0;
+		String eta = "";
+		List<String> list = new ArrayList<>();
 		try {
 			if(Integer.valueOf(count)==3) {
 				contractCtrl.addWaypointToRoute(id, name1, false);
 				contractCtrl.addWaypointToRoute(id, name2, false);
 				contractCtrl.addWaypointToRoute(id, name3, true);
+				list.add(start);list.add(name1); list.add(name2); list.add(name3);list.add(end);
 			}else if(Integer.valueOf(count)==2) {
 				contractCtrl.addWaypointToRoute(id, name1, false);
 				contractCtrl.addWaypointToRoute(id, name2, true);
+				list.add(start);list.add(name1); list.add(name2);list.add(end);
 			}else if(Integer.valueOf(count)==1) {
 				contractCtrl.addWaypointToRoute(id, name1, true);
+				list.add(start);list.add(name1);list.add(end);
 			}else if(Integer.valueOf(count)==0) {
 				contractCtrl.setWaypointToRouteFinished(id);
+				list.add(start);list.add(end);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			hasError = true;
 		}
+		JSONObject slatLng = geocoding(start);
+		double slat = slatLng.getDouble("lat");
+		double slng = slatLng.getDouble("lng");
+		for(int i=1;i<Integer.valueOf(count)+2;i++) {
+			JSONObject elatLng = geocoding(list.get(i));
+			double elat = elatLng.getDouble("lat");
+			double elng = elatLng.getDouble("lng");
+			distance = distance += DistanceUtil.distance(slat, slng, elat, elng, 'K');
+			slat = elat; slng = elng;
+		}
+		time = DistanceUtil.time(distance, Double.valueOf(mph), 'M');
+		eta = DistanceUtil.addTime(time).toString();
+		
+		try {
+			contractCtrl.setTimeAndDistance(id, time, String.valueOf(distance), eta);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		response.put("distance", distance);
+		response.put("time", time);
+		response.put("eta", eta);
 		response.put("hasError", hasError);
 		return response;
 	}
@@ -149,26 +185,29 @@ public class TrackingService {
 		return response;
 	}
 	
+	public static JSONObject geocoding(String location) {
+		HttpRequestClient obj = new HttpRequestClient();
+    	Map<Object, Object> data = new HashMap<>();
+    	data.put("location", location);
+    	JSONObject result = new JSONObject();
+		try {
+			result = obj.sendPost("http://open.mapquestapi.com/geocoding/v1/address?key="+MapQuestKey, data);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		JSONObject latLng = result.getJSONArray("results").getJSONObject(0).getJSONArray("locations")
+				.getJSONObject(0).getJSONObject("latLng");
+		return latLng;
+	}
+	
 	public static JSONObject findWaypoints(JSONObject response, String sellerLocation, String buyerLocation) {
 		double slat = 0.0, slng = 0.0, elat =0.0, elng = 0.0;
-    	try {
-	    	HttpRequestClient obj = new HttpRequestClient();
-	    	Map<Object, Object> data = new HashMap<>();
-	    	data.put("location", sellerLocation);
-			JSONObject result = obj.sendPost("http://open.mapquestapi.com/geocoding/v1/address?key="+MapQuestKey, data);
-			JSONObject latLng = result.getJSONArray("results").getJSONObject(0).getJSONArray("locations")
-					.getJSONObject(0).getJSONObject("latLng");
-			slat = latLng.getDouble("lat");
-			slng = latLng.getDouble("lng");
-	    	data.clear();
-	    	data.put("location", buyerLocation);
-	    	result = obj.sendPost("http://open.mapquestapi.com/geocoding/v1/address?key="+MapQuestKey, data);
-	    	latLng = result.getJSONArray("results").getJSONObject(0).getJSONArray("locations").getJSONObject(0).getJSONObject("latLng");
-	    	elat = latLng.getDouble("lat");
-			elng = latLng.getDouble("lng");
-    	}catch (Exception e) {
-    		e.printStackTrace();
-    	}
+    	JSONObject sLatLng = geocoding(sellerLocation);
+    	JSONObject eLatLng = geocoding(buyerLocation);
+    	slat = sLatLng.getDouble("lat");
+		slng = sLatLng.getDouble("lng");
+		elat = eLatLng.getDouble("lat");
+		elng = eLatLng.getDouble("lng");
 		double refDist = DistanceUtil.distance(slat, slng, elat, elng, 'K'); // distance from starting point to destination
 		System.out.println("refDist: "+refDist);
 		List<QueryDocumentSnapshot> list = firestoreProvider.getData("Geofence"); // retrieve document reference from db
@@ -177,8 +216,8 @@ public class TrackingService {
 		Comparator<Location> comp = (Location a, Location b) -> { // comparator for sorting waypoints
 		    return b.dist > a.dist ? -1 : (b.dist < a.dist) ? 1 : 0;
 		};
-		Comparator<Location> compX = (Location a, Location b) -> { // comparator for sorting waypoint's latitudes
-		    return b.lat < a.lat ? -1 : (b.lat > a.lat) ? 1 : 0;
+		Comparator<Location> compOrders = (Location a, Location b) -> { // comparator for sorting waypoint according to the distance to starting point
+		    return b.distToStart < a.distToStart ? -1 : (b.distToStart > a.distToStart) ? 1 : 0;
 		};
 		for(QueryDocumentSnapshot doc: list) {
 			double dist1 = DistanceUtil.distance(doc.getDouble("lat"), doc.getDouble("lng"), 
@@ -186,52 +225,34 @@ public class TrackingService {
 			double dist2 = DistanceUtil.distance(doc.getDouble("lat"), doc.getDouble("lng"), 
 					Double.valueOf(elat), Double.valueOf(elng), 'K'); // distance from waypoint to destination
 			if(((dist1+dist2) - refDist) <= 2.0 && (dist1+dist2) - refDist > 0.0) {
-				topWaypoints.add(new Location(doc.getId(), doc.getDouble("lat"), doc.getDouble("lng"), dist1+dist2));
+				topWaypoints.add(new Location(doc.getId(), doc.getDouble("lat"), doc.getDouble("lng"), dist1+dist2, dist1));
 				if(topWaypoints.size() == 4) {
 					topWaypoints.sort(comp); // sort the array list
 					topWaypoints.remove(topWaypoints.size()-1); // remove the last waypoint from the list
 				}
 			}
 		}
-		topWaypoints.sort(compX);
-		double totalDist = 0.0;
-		double tlat = slat; double tlng = slng;
+		topWaypoints.sort(compOrders);
 		for(Location l: topWaypoints) {
 			JSONObject obj = new JSONObject();
 			obj.put("name", l.name);
 			obj.put("lat", l.lat);
 			obj.put("lng", l.lng);
 			response.append("waypoints", obj);
-			totalDist += DistanceUtil.distance(tlat, tlng, l.lat, l.lng, 'K');
-			tlat = l.lat; tlng = l.lng;
 		}
-		totalDist += DistanceUtil.distance(tlat, tlng, elat, elng, 'K');
-		totalDist *= 1000;
 		response.put("count", topWaypoints.size());
-		response.put("distance", totalDist);
 		System.out.println("findWaypoints result: "+response.toString());
 		return response;
 	}
 	
 	public static JSONObject getDistance(JSONObject response, String start, String end) {
 		double slat = 0.0, slng = 0.0, elat =0.0, elng = 0.0;
-    	try {
-	    	HttpRequestClient obj = new HttpRequestClient();
-	    	Map<Object, Object> data = new HashMap<>();
-	    	data.put("location", start);
-			JSONObject result = obj.sendPost("http://open.mapquestapi.com/geocoding/v1/address?key="+MapQuestKey, data);
-			JSONObject latLng = result.getJSONArray("results").getJSONObject(0).getJSONArray("locations").getJSONObject(0).getJSONObject("latLng");
-			slat = latLng.getDouble("lat");
-			slng = latLng.getDouble("lng");
-	    	data.clear();
-	    	data.put("location", end);
-	    	result = obj.sendPost("http://open.mapquestapi.com/geocoding/v1/address?key="+MapQuestKey, data);
-	    	latLng = result.getJSONArray("results").getJSONObject(0).getJSONArray("locations").getJSONObject(0).getJSONObject("latLng");
-	    	elat = latLng.getDouble("lat");
-			elng = latLng.getDouble("lng");
-    	}catch (Exception e) {
-    		e.printStackTrace();
-    	}
+    	JSONObject sLatLng = geocoding(start);
+    	JSONObject eLatLng = geocoding(end);
+    	slat = sLatLng.getDouble("lat");
+		slng = sLatLng.getDouble("lng");
+		elat = eLatLng.getDouble("lat");
+		elng = eLatLng.getDouble("lng");
     	response.put("slat", slat);
     	response.put("slng", slng);
     	response.put("elat", elat);
@@ -281,5 +302,4 @@ public class TrackingService {
 		firestoreProvider.setShipmentRoute(shipmentId, seller, buyer, sellerLocation, buyerLocation, waypoints);
 		return response;
 	}
-	
 }

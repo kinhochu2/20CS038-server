@@ -52,9 +52,9 @@ public class LocationContractController {
 	    return LocationContract.load(address, web3, credentials, GAS_PRICE, GAS_LIMIT);
 	}
 	
-	public String createShipment(String itemId, String sName, String eName, String distance, String time) throws Exception {
+	public String createShipment(String itemId, String sName, String eName) throws Exception {
 		BigInteger weiValue = BigInteger.valueOf(4);
-		TransactionReceipt receipt = contract.createShipment(itemId, sName, eName, distance, time, weiValue).send();
+		TransactionReceipt receipt = contract.createShipment(itemId, sName, eName, weiValue).send();
 		if(receipt != null) {
 			System.out.println("createShipment result: "+receipt.toString());
 			return receipt.getGasUsed().toString(10);
@@ -64,8 +64,8 @@ public class LocationContractController {
 		}
 	}
 	
-	public Tuple3<String, String, String> getShipmentDetails(String id) throws Exception {
-		Tuple3<String, String, String> result = contract.getShipmentDetails(Numeric.decodeQuantity(id)).send();
+	public Tuple5<String, String, String, BigInteger, String> getShipmentDetails(String id) throws Exception {
+		Tuple5<String, String, String, BigInteger, String> result = contract.getShipmentDetails(Numeric.decodeQuantity(id)).send();
 		if(result != null) {
 			System.out.println("getShipmentDetails result: "+result.toString());
 		}else {
@@ -104,6 +104,15 @@ public class LocationContractController {
 			System.out.println("setWaypointToRouteFinished result: "+receipt.toString());
 		}else {
 			System.out.println("setWaypointToRouteFinished failed, receipt is null");
+		}
+	}
+	
+	public void setTimeAndDistance(String id, double time, String distance, String eta) throws Exception {
+		TransactionReceipt receipt = contract.setTimeAndDistance(BigInteger.valueOf(Integer.valueOf(id)), BigInteger.valueOf((int)time), distance, eta).send();
+		if(receipt != null) {
+			System.out.println("setTimeAndDistance result: "+receipt.toString());
+		}else {
+			System.out.println("setTimeAndDistance failed, receipt is null");
 		}
 	}
 }

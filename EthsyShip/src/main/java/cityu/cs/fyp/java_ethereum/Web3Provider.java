@@ -63,18 +63,19 @@ public class Web3Provider {
 	
 	private void build() {
 		//https://mainnet.infura.io/v3/89573bfd3d44416ba43c819873b81641 --infura
-		//http://localhost:7545 --ganache
-		//http://localhost:8545 --geth
+		//http://localhost:7545 --Ganache
+		//http://localhost:8545 --Geth
+		//During testing stage, it is found that Ganache usually have a faster interaction with smart contracts than Geth
 		try {
 			if(this.web3j == null)
-				this.web3j = Web3j.build(new HttpService("http://localhost:8545"));
+				this.web3j = Web3j.build(new HttpService("http://localhost:7545")); //Host URL for Web3j
 			if(this.admin == null)
-				this.admin = Admin.build(new HttpService("http://localhost:8545"));
+				this.admin = Admin.build(new HttpService("http://localhost:7545")); //Host URL for Web3j admin
 			
 			System.out.println("Connected to Ethereum client version: " + this.web3j.web3ClientVersion().send().getWeb3ClientVersion());
 			if(this.credentials == null) {
-				this.credentials = WalletUtils.loadCredentials("", "C:/Users/Kinson/Documents/GitHub/Test/keystore/UTC--2021-02-18T11-10-52.251947300Z--882b8be5f3c14e95c0e32bbd59dd99b25bc2a117"); //geth
-				//this.credentials = Credentials.create("1b0d11b60ddf3cc881c27da9edae1ac0c4a18b7f795f504df0074208cae2e4c9"); //ganache
+				//this.credentials = WalletUtils.loadCredentials("", "C:/Users/Kinson/Documents/GitHub/Test/keystore/UTC--2021-02-18T11-10-52.251947300Z--882b8be5f3c14e95c0e32bbd59dd99b25bc2a117"); //geth
+				this.credentials = Credentials.create("1b0d11b60ddf3cc881c27da9edae1ac0c4a18b7f795f504df0074208cae2e4c9"); //ganache
 				System.out.println("Credentials is created.");
 			}
 		} catch (Exception e) {

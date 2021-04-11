@@ -31,10 +31,11 @@ public class TrackingHandler {
 		switch(func) {
 			case "createshipment":
 				response = TrackingService.createShipement(response, map.get("itemId"), map.get("sellerLocation")
-						, map.get("buyerLocation"), map.get("distance"), map.get("time"));
+						, map.get("buyerLocation"));
 				break;
 			case "addwaypoints":
-				response = TrackingService.addWaypointToRoute(response, map.get("shipmentId"), map.get("name1"), map.get("name2"), map.get("name3"), map.get("count"));
+				response = TrackingService.addWaypointToRoute(response, map.get("shipmentId"), map.get("name1"), 
+						map.get("name2"), map.get("name3"), map.get("count"), map.get("start"), map.get("end"), map.get("mph"));
 				break;
 			case "findwaypoints": 
 				response = TrackingService.findWaypoints(response, map.get("sellerLocation"), map.get("buyerLocation"));
@@ -44,6 +45,9 @@ public class TrackingHandler {
 				break;
 			case "updatelocation":
 				response = TrackingService.updateLocation(response, map.get("address"), map.get("lat"), map.get("lng"));
+				break;
+			case "geocoding":
+				response = TrackingService.geocoding(map.get("location"));
 				break;
 		}
 		return response.toString();
