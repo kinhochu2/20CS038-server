@@ -1,8 +1,10 @@
 package cityu.cs.fyp.service.proof;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple4;
@@ -145,6 +147,72 @@ public class ProofService {
 			e.printStackTrace();
 			hasError = true;
 		}
+		response.put("hasError", hasError);
+		return response;
+	}
+	
+	public static JSONObject getRequestsByShipmentId(JSONObject response, String shipmentId) {
+		Boolean hasError = false;
+		Tuple4<List<BigInteger>, List<String>, List<String>, List<String>> result = null;
+		JSONObject obj = new JSONObject();
+		int count = 0;
+		try {
+			result = contractCtrl.getRequestsByShipmentId(shipmentId);
+			count = result.component1().size();
+			JSONArray requestIds = new JSONArray();
+			JSONArray sellerLats = new JSONArray();
+			JSONArray sellerLngs = new JSONArray();
+			JSONArray timestamps = new JSONArray();
+			
+			for(int i=0;i<count;i++) {
+				requestIds.put(result.component1().get(i).toString());
+				sellerLats.put(result.component2().get(i).toString());
+				sellerLngs.put(result.component3().get(i).toString());
+				timestamps.put(result.component4().get(i).toString());
+			}
+			obj.put("requestIds", requestIds);
+			obj.put("sellerLats", sellerLats);
+			obj.put("sellerLngs", sellerLngs);
+			obj.put("timestamps", timestamps);
+		} catch (Exception e) {
+			e.printStackTrace();
+			hasError = true;
+		}
+		response.put("count", count);
+		response.put("result", obj);
+		response.put("hasError", hasError);
+		return response;
+	}
+	
+	public static JSONObject getResponseByRequestId(JSONObject response, String requestId) {
+		Boolean hasError = false;
+		Tuple4<List<String>, List<String>, List<String>, List<String>> result = null;
+		JSONObject obj = new JSONObject();
+		int count = 0;
+		try {
+			result = contractCtrl.getResponseByRequestId(requestId);
+			count = result.component1().size();
+			JSONArray witnessAddrs = new JSONArray();
+			JSONArray witnessLats = new JSONArray();
+			JSONArray witnessLngs = new JSONArray();
+			JSONArray timestamps = new JSONArray();
+			
+			for(int i=0;i<count;i++) {
+				witnessAddrs.put(result.component1().get(i).toString());
+				witnessLats.put(result.component2().get(i).toString());
+				witnessLngs.put(result.component3().get(i).toString());
+				timestamps.put(result.component4().get(i).toString());
+			}
+			obj.put("witnessAddrs", witnessAddrs);
+			obj.put("witnessLats", witnessLats);
+			obj.put("sellerLngs", witnessLngs);
+			obj.put("timestamps", timestamps);
+		} catch (Exception e) {
+			e.printStackTrace();
+			hasError = true;
+		}
+		response.put("count", count);
+		response.put("result", obj);
 		response.put("hasError", hasError);
 		return response;
 	}

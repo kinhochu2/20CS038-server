@@ -54,7 +54,7 @@ public class TrackingService {
 		List<QueryDocumentSnapshot> list = firestoreProvider.getData("Geofence");
 		for(QueryDocumentSnapshot doc: list) {
 			JSONArray array = new JSONArray();
-			array.put(doc.getId());
+			array.put(doc.get("name"));
 			array.put(doc.get("lat"));
 			array.put(doc.get("lng"));
 			response.put("locations", array);
@@ -159,7 +159,7 @@ public class TrackingService {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+		System.out.println("distance: "+distance+" miles");
 		response.put("distance", distance);
 		response.put("time", time);
 		response.put("eta", eta);
@@ -208,8 +208,8 @@ public class TrackingService {
 		slng = sLatLng.getDouble("lng");
 		elat = eLatLng.getDouble("lat");
 		elng = eLatLng.getDouble("lng");
-		double refDist = DistanceUtil.distance(slat, slng, elat, elng, 'K'); // distance from starting point to destination
-		System.out.println("refDist: "+refDist);
+		double refDist = DistanceUtil.distance(slat, slng, elat, elng, 'M'); // distance from starting point to destination
+		System.out.println("refDist: "+refDist + "miles");
 		List<QueryDocumentSnapshot> list = firestoreProvider.getData("Geofence"); // retrieve document reference from db
 		List<Location> topWaypoints = new ArrayList<Location>();
 		
@@ -221,11 +221,12 @@ public class TrackingService {
 		};
 		for(QueryDocumentSnapshot doc: list) {
 			double dist1 = DistanceUtil.distance(doc.getDouble("lat"), doc.getDouble("lng"), 
-					Double.valueOf(slat), Double.valueOf(slng), 'K'); // distance from waypoint to starting point
+					Double.valueOf(slat), Double.valueOf(slng), 'M'); // distance from waypoint to starting point
 			double dist2 = DistanceUtil.distance(doc.getDouble("lat"), doc.getDouble("lng"), 
-					Double.valueOf(elat), Double.valueOf(elng), 'K'); // distance from waypoint to destination
-			if(((dist1+dist2) - refDist) <= 2.0 && (dist1+dist2) - refDist > 0.0) {
-				topWaypoints.add(new Location(doc.getId(), doc.getDouble("lat"), doc.getDouble("lng"), dist1+dist2, dist1));
+					Double.valueOf(elat), Double.valueOf(elng), 'M'); // distance from waypoint to destination
+			System.out.println("dist1+dist2: "+(dist1+dist2) + "miles");
+			if(((dist1+dist2) - refDist) <= 0.5 && (dist1+dist2) - refDist > 0.0) {
+				topWaypoints.add(new Location(doc.getString("name"), doc.getDouble("lat"), doc.getDouble("lng"), dist1+dist2, dist1));
 				if(topWaypoints.size() == 4) {
 					topWaypoints.sort(comp); // sort the array list
 					topWaypoints.remove(topWaypoints.size()-1); // remove the last waypoint from the list
@@ -257,7 +258,7 @@ public class TrackingService {
     	response.put("slng", slng);
     	response.put("elat", elat);
     	response.put("elng", elng);
-    	response.put("distance", DistanceUtil.distance(slat, slng, elat, elng, 'K')*1000);
+    	response.put("distance", DistanceUtil.distance(slat, slng, elat, elng, 'M')*1000);
     	return response;
 	}
 

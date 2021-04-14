@@ -11,6 +11,12 @@ public class ProofHandler {
 	public static String handleGET(String func, Map<String, String> map) {
 		JSONObject response = new JSONObject();
 		switch(func) {
+			case "getrequests":
+				response = ProofService.getRequestsByShipmentId(response, map.get("shipmentId"));
+				break;
+			case "getresponses":
+				response = ProofService.getResponseByRequestId(response, map.get("requestId"));
+				break;
 		}
 		return response.toString();
 	}

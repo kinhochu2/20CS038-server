@@ -155,6 +155,28 @@ public class ProofOfCoordinatesController {
 		}
 	}
 	
+	public Tuple4<List<BigInteger>, List<String>, List<String>, List<String>> getRequestsByShipmentId(String shipmentId) throws Exception {
+		Tuple4<List<BigInteger>, List<String>, List<String>, List<String>> result = contract.getRequestsByShipmentId(shipmentId).send();
+		if(result != null) {
+			System.out.println("getRequestsByShipmentId result: "+result.toString());
+			return result;
+		}else {
+			System.out.println("getRequestsByShipmentId failed, result is null");
+			return null;
+		}
+	}
+	
+	public Tuple4<List<String>, List<String>, List<String>, List<String>> getResponseByRequestId(String requestId) throws Exception {
+		Tuple4<List<String>, List<String>, List<String>, List<String>> result = contract.getResponseByRequestId(BigInteger.valueOf(Integer.valueOf(requestId))).send();
+		if(result != null) {
+			System.out.println("getResponseByRequestId result: "+result.toString());
+			return result;
+		}else {
+			System.out.println("getResponseByRequestId failed, result is null");
+			return null;
+		}
+	}
+	
 	public int getId() {
 		return this.requestIdCount++;
 	}
