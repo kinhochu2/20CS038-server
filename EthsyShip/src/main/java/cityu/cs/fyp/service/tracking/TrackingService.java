@@ -148,7 +148,7 @@ public class TrackingService {
 			JSONObject elatLng = geocoding(list.get(i));
 			double elat = elatLng.getDouble("lat");
 			double elng = elatLng.getDouble("lng");
-			distance = distance += DistanceUtil.distance(slat, slng, elat, elng, 'K');
+			distance = distance += DistanceUtil.distance(slat, slng, elat, elng, 'M');
 			slat = elat; slng = elng;
 		}
 		time = DistanceUtil.time(distance, Double.valueOf(mph), 'M');
