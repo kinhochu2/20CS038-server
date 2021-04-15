@@ -160,6 +160,7 @@ public class TrackingService {
 			e.printStackTrace();
 		}
 		System.out.println("distance: "+distance+" miles");
+		System.out.println("time: "+time+" minutes");
 		response.put("distance", distance);
 		response.put("time", time);
 		response.put("eta", eta);

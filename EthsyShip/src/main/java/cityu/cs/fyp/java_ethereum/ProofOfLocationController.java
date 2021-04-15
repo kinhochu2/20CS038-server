@@ -11,16 +11,16 @@ import org.web3j.tuples.generated.Tuple4;
 import org.web3j.tuples.generated.Tuple5;
 import org.web3j.utils.Numeric;
 
-public class ProofOfCoordinatesController {
+public class ProofOfLocationController {
 	
-	private ProofOfCoordinates contract = null;
+	private ProofOfLocation contract = null;
 	private BigInteger GAS_PRICE = BigInteger.valueOf(20000000000L);
 	private BigInteger GAS_LIMIT = BigInteger.valueOf(6721975L);
 	private Web3Provider web3Provider;
-	private static ProofOfCoordinatesController instance = null;
+	private static ProofOfLocationController instance = null;
 	private int requestIdCount = 0;
 	
-	private ProofOfCoordinatesController() {
+	private ProofOfLocationController() {
 		init();
 	}
 	
@@ -35,9 +35,9 @@ public class ProofOfCoordinatesController {
 		}
 	}
 	
-	public static ProofOfCoordinatesController getInstance() {
+	public static ProofOfLocationController getInstance() {
 		if(instance == null) {
-			instance = new ProofOfCoordinatesController();
+			instance = new ProofOfLocationController();
 		}
 		return instance;
 	}
@@ -48,8 +48,8 @@ public class ProofOfCoordinatesController {
 	}
 	
 	@SuppressWarnings("deprecation")
-	private ProofOfCoordinates loadContract(String address, Web3j web3, Credentials credentials){
-	    return ProofOfCoordinates.load(address, web3, credentials, GAS_PRICE, GAS_LIMIT);
+	private ProofOfLocation loadContract(String address, Web3j web3, Credentials credentials){
+	    return ProofOfLocation.load(address, web3, credentials, GAS_PRICE, GAS_LIMIT);
 	}
 	
 	public String createRequest(String shipmentId, String proverLat, String proverLng, String proverAddr

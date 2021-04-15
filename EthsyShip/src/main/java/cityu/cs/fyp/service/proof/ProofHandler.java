@@ -26,8 +26,7 @@ public class ProofHandler {
 		switch(func) {
 			case "createrequest":
 				response = ProofService.createRequest(response, map.get("shipmentId"), map.get("proverLat")
-						, map.get("proverLng"), map.get("proverAddr"), map.get("preHx"), map.get("timestamp") 
-						, map.get("password"), map);
+						, map.get("proverLng"), map.get("proverAddr"), map.get("password"), map);
 				break;
 			case "addresponse":
 				response = ProofService.addResponse(response, map.get("requestId"), map.get("shipmentId")

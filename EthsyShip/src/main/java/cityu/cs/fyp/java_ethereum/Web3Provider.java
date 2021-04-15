@@ -192,14 +192,14 @@ public class Web3Provider {
 	public int signMessage(String address, String password, Object obj) {
 		int hxCode = -1;
 		String sha3HashOfDataToSign = Hash.sha3String(obj.toString());
-		if(this.unlockAccount(address, password)) {
+		//if(this.unlockAccount(address, password)) {
 			try {
 				EthSign ethsign = admin.ethSign(address, sha3HashOfDataToSign).send();
 				hxCode = ethsign.hashCode();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
+		//}
 		return hxCode;
 	}
 	

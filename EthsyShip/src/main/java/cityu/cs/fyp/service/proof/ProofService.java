@@ -1,6 +1,7 @@
 package cityu.cs.fyp.service.proof;
 
 import java.math.BigInteger;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -10,23 +11,29 @@ import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple4;
 import org.web3j.tuples.generated.Tuple5;
 
-import cityu.cs.fyp.java_ethereum.ProofOfCoordinatesController;
+import cityu.cs.fyp.java_ethereum.ProofOfLocationController;
 import cityu.cs.fyp.java_ethereum.Web3Provider;
 import cityu.cs.fyp.util.DistanceUtil;
 import cityu.cs.fyp.util.SignUtil;
 
 public class ProofService {
 
-	private static ProofOfCoordinatesController contractCtrl = ProofOfCoordinatesController.getInstance();
+	private static ProofOfLocationController contractCtrl = ProofOfLocationController.getInstance();
 	
 	public static JSONObject createRequest(JSONObject response, String shipmentId, String proverLat
-			, String proverLng, String proverAddr, String preHx, String timestamp, String password
-			, Map<String, String> map) {
+			, String proverLng, String proverAddr, String password, Map<String, String> map) {
 		String blockHx = "";
 		Boolean hasError = false;
+		String timestamp = Calendar.getInstance().getTime().toString();
+		String preHx = "0";
 		try {
 			int signedHx = Web3Provider.getInstance().signMessage(proverAddr, password, map);
 			System.out.println("signedHx: "+signedHx);
+			System.out.println("shipmentId: "+shipmentId);
+			System.out.println("proverLat: "+proverLat);
+			System.out.println("proverLng: "+proverLng);
+			System.out.println("proverAddr: "+proverAddr);
+			System.out.println("timestamp: "+timestamp);
 			blockHx = contractCtrl.createRequest(shipmentId, proverLat, proverLng, proverAddr, preHx, timestamp, signedHx);
 			if(verifyRequest(String.valueOf(contractCtrl.getId()))) {
 				response.put("blockHx", blockHx);
@@ -47,6 +54,7 @@ public class ProofService {
 			, String witnessLat, String witnessLng, String witnessAddr, String timestamp, String password
 			, Map<String, String> map) {
 		Boolean hasError = false;
+		timestamp = Calendar.getInstance().getTime().toString();
 		try {
 			int signedHx = Web3Provider.getInstance().signMessage(witnessAddr, password, map);
 			contractCtrl.addResponse(requestId, shipmentId, witnessLat, witnessLng, witnessAddr, timestamp, signedHx);
