@@ -71,11 +71,11 @@ public class ProofService {
 	}
 	
 	public static JSONObject loadRequest(JSONObject response, String requestId) {
-		Tuple5<String, String, String, String, String> result = null;
+		Tuple5<BigInteger, String, String, String, String> result = null;
 		Boolean hasError = false;
 		try {
 			result = contractCtrl.loadRequestDetails(requestId);
-			response.put("shipmentId", result.component1());
+			response.put("shipmentId", result.component1().toString());
 			response.put("proverLat", result.component2());
 			response.put("proverLng", result.component3());
 			response.put("proverAddr", result.component4());
@@ -125,7 +125,7 @@ public class ProofService {
 	private static boolean verifyResponse(String requestId, String witnessAddr) {
 		boolean result = true;
 		try {
-			Tuple4<String, String, String, String> details = contractCtrl.loadResponseDetails(requestId, witnessAddr);
+			Tuple4<BigInteger, String, String, String> details = contractCtrl.loadResponseDetails(requestId, witnessAddr);
 			Tuple2<String, BigInteger> responseHx = contractCtrl.getResponseSignedHx(requestId, witnessAddr);
 			if(responseHx.component1() == null || responseHx.component2() == null) {
 				result = false;

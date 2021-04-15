@@ -54,7 +54,7 @@ public class ProofOfLocationController {
 	
 	public String createRequest(String shipmentId, String proverLat, String proverLng, String proverAddr
 			, String preHx, String timestamp, int signedHx) throws Exception {
-		TransactionReceipt receipt = contract.createRequest(shipmentId, proverLat, proverLng
+		TransactionReceipt receipt = contract.createRequest(BigInteger.valueOf(Integer.valueOf(shipmentId)), proverLat, proverLng
 				, proverAddr, preHx, timestamp).send();
 		this.setSignedHx(requestIdCount, signedHx);
 		if(receipt != null) {
@@ -78,7 +78,7 @@ public class ProofOfLocationController {
 	public String addResponse(String requestId, String shipmentId, String witnessLat, String witnessLng
 			, String witnessAddr, String timestamp, int signedHx) throws Exception {
 		TransactionReceipt receipt = contract.addResponse(BigInteger.valueOf(Integer.valueOf(requestId))
-				, shipmentId, witnessLat, witnessLng, witnessAddr
+				, BigInteger.valueOf(Integer.valueOf(shipmentId)), witnessLat, witnessLng, witnessAddr
 				, timestamp, BigInteger.valueOf(signedHx)).send();
 		if(receipt != null) {
 			System.out.println("createRequest result: "+receipt.toString());
@@ -89,8 +89,8 @@ public class ProofOfLocationController {
 		}
 	}
 	
-	public Tuple4<String, String, String, String> loadResponseDetails(String requestId, String address) throws Exception {
-		Tuple4<String, String, String, String> result = contract.loadResponseDetails(Numeric.decodeQuantity(requestId), address).send();
+	public Tuple4<BigInteger, String, String, String> loadResponseDetails(String requestId, String address) throws Exception {
+		Tuple4<BigInteger, String, String, String> result = contract.loadResponseDetails(Numeric.decodeQuantity(requestId), address).send();
 		if(result != null) {
 			System.out.println("loadResponseDetails result: "+result.toString());
 			return result;
@@ -100,8 +100,8 @@ public class ProofOfLocationController {
 		}
 	}
 	
-	public Tuple5<String, String, String, String, String> loadRequestDetails(String requestId) throws Exception {
-		Tuple5<String, String, String, String, String> result = contract.loadRequestDetails(Numeric.decodeQuantity(requestId)).send();
+	public Tuple5<BigInteger, String, String, String, String> loadRequestDetails(String requestId) throws Exception {
+		Tuple5<BigInteger, String, String, String, String> result = contract.loadRequestDetails(Numeric.decodeQuantity(requestId)).send();
 		if(result != null) {
 			System.out.println("loadRequestDetails result: "+result.toString());
 			return result;
@@ -156,7 +156,7 @@ public class ProofOfLocationController {
 	}
 	
 	public Tuple4<List<BigInteger>, List<String>, List<String>, List<String>> getRequestsByShipmentId(String shipmentId) throws Exception {
-		Tuple4<List<BigInteger>, List<String>, List<String>, List<String>> result = contract.getRequestsByShipmentId(shipmentId).send();
+		Tuple4<List<BigInteger>, List<String>, List<String>, List<String>> result = contract.getRequestsByShipmentId(BigInteger.valueOf(Integer.valueOf(shipmentId))).send();
 		if(result != null) {
 			System.out.println("getRequestsByShipmentId result: "+result.toString());
 			return result;
