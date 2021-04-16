@@ -158,7 +158,7 @@ public class Web3Provider {
 	public JSONObject sendTransaction(String from, String to, String value, String password) {
 		JSONObject processJson = new JSONObject();
 		try {	
-			if(this.unlockAccount(from, password)) {
+			//if(this.unlockAccount(from, password)) {
 		        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(
 		                from, DefaultBlockParameterName.LATEST).sendAsync().get();
 		        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
@@ -169,9 +169,9 @@ public class Web3Provider {
 				processJson.put("to", to);
 				processJson.put("txHash", transactionResponse.hashCode());
 				System.out.println("sendTransaction completed, txHash: "+transactionResponse.hashCode());
-			}else {
-				System.out.println("account is not unlocked yet");
-			}
+//			}else {
+//				System.out.println("account is not unlocked yet");
+//			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

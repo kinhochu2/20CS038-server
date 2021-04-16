@@ -17,6 +17,9 @@ public class ProofHandler {
 			case "getresponses":
 				response = ProofService.getResponseByRequestId(response, map.get("requestId"));
 				break;
+			case "getrevertreason":
+				response= ProofService.getRevertReason(response, map.get("hash"));
+				break;
 		}
 		return response.toString();
 	}

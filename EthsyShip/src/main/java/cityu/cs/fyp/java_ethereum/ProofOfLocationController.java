@@ -44,7 +44,7 @@ public class ProofOfLocationController {
 	
 	@SuppressWarnings("deprecation")
 	private String deployContract(Web3j web3j, Credentials credentials) throws Exception{
-	    return LocationContract.deploy(web3j, credentials, GAS_PRICE, GAS_LIMIT).send().getContractAddress();
+	    return ProofOfLocation.deploy(web3j, credentials, GAS_PRICE, GAS_LIMIT).send().getContractAddress();
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -57,6 +57,7 @@ public class ProofOfLocationController {
 		TransactionReceipt receipt = contract.createRequest(BigInteger.valueOf(Integer.valueOf(shipmentId)), proverLat, proverLng
 				, proverAddr, preHx, timestamp).send();
 		this.setSignedHx(requestIdCount, signedHx);
+		
 		if(receipt != null) {
 			System.out.println("createRequest result: "+receipt.toString());
 			return receipt.getBlockHash().toString();
@@ -178,6 +179,7 @@ public class ProofOfLocationController {
 	}
 	
 	public int getId() {
-		return this.requestIdCount++;
+		this.requestIdCount++;
+		return this.requestIdCount;
 	}
 }

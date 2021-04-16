@@ -1,5 +1,6 @@
 package cityu.cs.fyp.service.proof;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Calendar;
 import java.util.List;
@@ -7,6 +8,8 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple4;
 import org.web3j.tuples.generated.Tuple5;
@@ -35,14 +38,23 @@ public class ProofService {
 			System.out.println("proverAddr: "+proverAddr);
 			System.out.println("timestamp: "+timestamp);
 			blockHx = contractCtrl.createRequest(shipmentId, proverLat, proverLng, proverAddr, preHx, timestamp, signedHx);
-			if(verifyRequest(String.valueOf(contractCtrl.getId()))) {
+			if(verifyRequest(String.valueOf(contractCtrl.getId()-1))) {
 				response.put("blockHx", blockHx);
-				response.put("requestId", contractCtrl.getId());
+				response.put("requestId", contractCtrl.getId()-1);
 			}else {
 				hasError = false;
 				System.out.println("failed in verifyRequest");
 			}
+		} catch (TransactionException e) {
+			System.out.println("TransactionException: "+e.toString());
+			e.printStackTrace();
+			hasError = true;
+		} catch (IOException e) {
+			System.out.println("IOException: "+e.toString());
+			e.printStackTrace();
+			hasError = true;
 		} catch (Exception e) {
+			System.out.println("Exception: "+e.toString());
 			e.printStackTrace();
 			hasError = true;
 		}
@@ -222,6 +234,24 @@ public class ProofService {
 		response.put("count", count);
 		response.put("result", obj);
 		response.put("hasError", hasError);
+		return response;
+	}
+	
+	public static JSONObject getRevertReason(JSONObject response, String hash) {
+		EthGetTransactionReceipt transactionReceipt;
+		try {
+			transactionReceipt = Web3Provider.getInstance().getWeb3j().ethGetTransactionReceipt(hash).send();
+			if (transactionReceipt.getResult() != null && !transactionReceipt.hasError()) {
+		        System.out.println(transactionReceipt.getTransactionReceipt().get().getStatus());
+		        response.put("result", transactionReceipt.getTransactionReceipt().get().getStatus());
+		    } else {
+		      response.put("result", "nothing");
+		    }
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
 		return response;
 	}
 }
