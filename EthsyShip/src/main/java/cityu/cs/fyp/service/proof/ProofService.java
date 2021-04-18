@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tuples.generated.Tuple2;
+import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tuples.generated.Tuple4;
 import org.web3j.tuples.generated.Tuple5;
 
@@ -84,14 +85,19 @@ public class ProofService {
 	
 	public static JSONObject loadRequest(JSONObject response, String requestId) {
 		Tuple5<BigInteger, String, String, String, String> result = null;
+		Tuple3<BigInteger, BigInteger, Boolean> result2 = null;
 		Boolean hasError = false;
 		try {
 			result = contractCtrl.loadRequestDetails(requestId);
+			result2 = contractCtrl.getRequestStatus(requestId);
 			response.put("shipmentId", result.component1().toString());
 			response.put("proverLat", result.component2());
 			response.put("proverLng", result.component3());
 			response.put("proverAddr", result.component4());
 			response.put("timestamp", result.component5());
+			response.put("preHx", result2.component1());
+			response.put("signedHx", result2.component2());
+			response.put("finished", result2.component3());
 		} catch (Exception e) {
 			e.printStackTrace();
 			hasError = true;
@@ -100,11 +106,26 @@ public class ProofService {
 		return response;
 	}
 	
-	public static JSONObject submitBlock(JSONObject response, String requestId, String preHx) {
+	public static JSONObject submitBlock(JSONObject response, String requestId, String preHx, String address, Map<String, String> map) {
+		Boolean hasError = false;
+		preHx = "0";
+		try {
+			contractCtrl.submitBlock(requestId, preHx);
+			int hxCode = Web3Provider.getInstance().signMessage(address, "", map);
+			System.out.println("hxCode: "+hxCode);
+			contractCtrl.setLatestBlockHx(hxCode);
+			response.put("hxCode", hxCode);
+		} catch (Exception e) {
+			e.printStackTrace();
+			hasError = true;
+		}
+		response.put("hasError", hasError);
+		return response;
+	}
+	
+	public static JSONObject getRequestStatus(JSONObject response, String requestId) {
 		Boolean hasError = false;
 		try {
-			int hxCode = contractCtrl.submitBlock(requestId, preHx);
-			response.put("hxCode", hxCode);
 		} catch (Exception e) {
 			e.printStackTrace();
 			hasError = true;
@@ -118,12 +139,12 @@ public class ProofService {
 		try {
 			JSONObject details = new JSONObject();
 			details = ProofService.loadRequest(details, requestId);
-			Tuple2<String, BigInteger> requestHx = contractCtrl.getRequestSignedHx(requestId);
+			Tuple2<BigInteger, BigInteger> requestHx = contractCtrl.getRequestSignedHx(requestId);
 			if(requestHx.component1() == null || requestHx.component2() == null) {
 				result = false;
 			}
-			double proverLat = details.getDouble("proverLat");
-			double proverLng = details.getDouble("proverLng");
+			double proverLat = (double)details.get("proverLat");
+			double proverLng = (double)details.get("proverLng");
 			if(DistanceUtil.distance(proverLat, proverLng, 22.302711, 114.177216, 'K') > 500.0) {
 				result = false;
 			}
@@ -225,7 +246,7 @@ public class ProofService {
 			}
 			obj.put("witnessAddrs", witnessAddrs);
 			obj.put("witnessLats", witnessLats);
-			obj.put("sellerLngs", witnessLngs);
+			obj.put("witnessLngs", witnessLngs);
 			obj.put("timestamps", timestamps);
 		} catch (Exception e) {
 			e.printStackTrace();

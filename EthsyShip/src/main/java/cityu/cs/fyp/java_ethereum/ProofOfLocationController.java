@@ -7,6 +7,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tuples.generated.Tuple2;
+import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tuples.generated.Tuple4;
 import org.web3j.tuples.generated.Tuple5;
 import org.web3j.utils.Numeric;
@@ -55,7 +56,7 @@ public class ProofOfLocationController {
 	public String createRequest(String shipmentId, String proverLat, String proverLng, String proverAddr
 			, String preHx, String timestamp, int signedHx) throws Exception {
 		TransactionReceipt receipt = contract.createRequest(BigInteger.valueOf(Integer.valueOf(shipmentId)), proverLat, proverLng
-				, proverAddr, preHx, timestamp).send();
+				, proverAddr, BigInteger.valueOf(Integer.valueOf(preHx)), timestamp).send();
 		this.setSignedHx(requestIdCount, signedHx);
 		
 		if(receipt != null) {
@@ -123,8 +124,8 @@ public class ProofOfLocationController {
 		}
 	}
 	
-	public Tuple2<String, BigInteger> getRequestSignedHx(String requestId) throws Exception {
-		Tuple2<String, BigInteger> result = contract.getRequestSignedHx(Numeric.decodeQuantity(requestId)).send();
+	public Tuple2<BigInteger, BigInteger> getRequestSignedHx(String requestId) throws Exception {
+		Tuple2<BigInteger, BigInteger> result = contract.getRequestSignedHx(Numeric.decodeQuantity(requestId)).send();
 		if(result != null) {
 			System.out.println("getRequestSignedHx result: "+result.toString());
 			return result;
@@ -181,5 +182,20 @@ public class ProofOfLocationController {
 	public int getId() {
 		this.requestIdCount++;
 		return this.requestIdCount;
+	}
+	
+	public Tuple3<BigInteger, BigInteger, Boolean> getRequestStatus(String requestId) throws Exception {
+		Tuple3<BigInteger, BigInteger, Boolean> result = contract.getRequestStatus(BigInteger.valueOf(Integer.valueOf(requestId))).send();
+		if(result != null) {
+			System.out.println("getRequestStatus result: "+result.toString());
+			return result;
+		}else {
+			System.out.println("getRequestStatus failed, result is null");
+			return null;
+		}
+	}
+	
+	public void setLatestBlockHx(int hx) {
+		contract.setLatestBlockHx(BigInteger.valueOf(hx));
 	}
 }

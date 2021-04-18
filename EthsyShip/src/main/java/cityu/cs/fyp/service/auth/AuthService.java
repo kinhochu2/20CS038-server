@@ -32,7 +32,8 @@ public class AuthService {
 				uid = createUser(email, password);
 				JSONObject newWallet = web3Provider.createWallet(password);
 				address = newWallet.getString("address");
-				firestoreProvider.logNewAccount(email, uid, address, location);
+				String fileName = newWallet.getString("fileName");
+				firestoreProvider.logNewAccount(email, uid, address, location, fileName);
 			}else {
 				System.out.println("getUserByEmail: "+errCode.toString());
 			}

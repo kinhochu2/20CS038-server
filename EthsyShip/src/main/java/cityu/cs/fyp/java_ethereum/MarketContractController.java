@@ -9,6 +9,8 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tuples.generated.Tuple5;
 import org.web3j.utils.Numeric;
 
+import cityu.cs.fyp.firebase.FirestoreProvider;
+
 public class MarketContractController {
 	
 	private MarketContract contract = null;
@@ -107,7 +109,8 @@ public class MarketContractController {
 	
 	public void finishShipping(String seller, String buyer, String shipmentId, String value, String password) throws Exception {
 		TransactionReceipt receipt = contract.finishShipping(buyer, seller, Numeric.decodeQuantity(shipmentId)).send();
-		this.web3Provider.sendTransaction(seller, buyer, value, password);
+		String fileName = FirestoreProvider.getInstance().getFileName(seller);
+		this.web3Provider.sendTransaction(seller, buyer, value, password, fileName);
 		if(receipt != null) {
 			System.out.println("finishShipping result: "+receipt.toString());
 		}else {

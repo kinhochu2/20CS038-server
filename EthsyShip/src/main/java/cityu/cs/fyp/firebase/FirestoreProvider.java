@@ -97,6 +97,23 @@ public class FirestoreProvider {
 		return address;
 	}
 	
+	public String getFileName(String address) {
+		String fileName = null;
+		try {
+			CollectionReference users = db.collection("Users");
+			Query query = users.whereEqualTo("address", address);
+			ApiFuture<QuerySnapshot> querySnapshot = query.get();
+			for(QueryDocumentSnapshot doc: querySnapshot.get().getDocuments()) {
+				System.out.println("doc.getId():"+doc.getId());
+				fileName = doc.getString("fileName");
+			}
+			System.out.println("fileName: "+fileName);
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}
+		return fileName;
+	}
+	
 	public String getBalance(String address) {
 		String balance = null;
 		try {
@@ -112,13 +129,14 @@ public class FirestoreProvider {
 		return balance;
 	}
 	
-	public void logNewAccount(String email, String uid, String address, String location) {
+	public void logNewAccount(String email, String uid, String address, String location, String fileName) {
 		DocumentReference docRef = getRef("Users", email);
 		Map<String, Object> data = new HashMap<>();
 		data.put("email", email);
 		data.put("uid", uid);
 		data.put("address", address);
 		data.put("location", location);
+		data.put("fileName", fileName);
 		setData(data, docRef);
 		System.out.println("Record in firestore is logged");
 	}
@@ -158,4 +176,5 @@ public class FirestoreProvider {
 		}
 		return d;
 	}
+	
 }

@@ -40,7 +40,7 @@ public class ProofHandler {
 				response = ProofService.loadRequest(response, map.get("requestId"));
 				break;
 			case "submitblock":
-				response = ProofService.submitBlock(response, map.get("requestId"), map.get("preHx"));
+				response = ProofService.submitBlock(response, map.get("requestId"), map.get("preHx"), map.get("address"), map);
 				break;
 			case "verifyblocks":
 				response = ProofService.verifyBlocks(response, map.get("blockHx"), map.get("totalCount"));

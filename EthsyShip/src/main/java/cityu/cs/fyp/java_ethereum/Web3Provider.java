@@ -1,5 +1,6 @@
 package cityu.cs.fyp.java_ethereum;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -47,8 +48,9 @@ public class Web3Provider {
 	private static Web3Provider provider = null;
 	private Credentials credentials = null;
 
-	private BigInteger GAS_PRICE = BigInteger.valueOf(20000000000L);
-	private BigInteger GAS_LIMIT = BigInteger.valueOf(6721975L);
+	private final BigInteger GAS_PRICE = BigInteger.valueOf(20000000000L);
+	private final BigInteger GAS_LIMIT = BigInteger.valueOf(6721975L);
+	private final String WALLET_PATH = "C:/Users/Kinson/Documents/GitHub/Test/keystore/";
 	
 	private Web3Provider() {
 		build();
@@ -106,8 +108,8 @@ public class Web3Provider {
 			BigInteger wei = ethGetBalance.getBalance();
 			java.math.BigDecimal tokenValue = Convert.fromWei(String.valueOf(wei), Convert.Unit.ETHER);
 			strTokenAmount = String.valueOf(tokenValue);
-			
 			processJson.put("balance", strTokenAmount);
+			System.out.println("getBalance completed, address: "+address);
 			System.out.println("getBalance completed, balance: "+strTokenAmount);
 		} catch (InterruptedException | ExecutionException | IOException e) {
 			e.printStackTrace();
@@ -124,12 +126,18 @@ public class Web3Provider {
             String sPrivatekeyInHex = privateKeyInDec.toString(16);
             WalletFile aWallet = Wallet.createStandard(password, ecKeyPair);
             String sAddress = aWallet.getAddress();
-            processJson.put("address", "0x" + sAddress);
+            //processJson.put("address", "0x" + sAddress);
             processJson.put("privatekey", sPrivatekeyInHex);
+            
+            String fileName = WalletUtils.generateNewWalletFile(password, new File("C:\\Users\\Kinson\\Documents\\GitHub\\Test\\keystore"), true);
+            sAddress = WalletUtils.loadCredentials(password, WALLET_PATH+fileName).getAddress();
+            processJson.put("address", sAddress);
             this.sendTransaction(sAddress, "100");
+            System.out.println("File name: " + fileName);
+            processJson.put("fileName", fileName);
             System.out.println("createWallet completed, address: "+sAddress);
         } catch (CipherException | InvalidAlgorithmParameterException 
-        		| NoSuchAlgorithmException | NoSuchProviderException e) {
+        		| NoSuchAlgorithmException | NoSuchProviderException | IOException e) {
             e.printStackTrace();
         }
 		return processJson;
@@ -155,23 +163,28 @@ public class Web3Provider {
 		return processJson;
 	}
 	
-	public JSONObject sendTransaction(String from, String to, String value, String password) {
+	public JSONObject sendTransaction(String from, String to, String value, String password, String fileName) {
 		JSONObject processJson = new JSONObject();
 		try {	
-			//if(this.unlockAccount(from, password)) {
-		        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(
-		                from, DefaultBlockParameterName.LATEST).sendAsync().get();
-		        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-		        Transaction transaction = Transaction.createEtherTransaction(from, nonce, GAS_PRICE, GAS_LIMIT, 
-		        		to, Numeric.decodeQuantity(value));
-		        EthSendTransaction transactionResponse = admin.ethSendTransaction(transaction).send();
+				Credentials cred = WalletUtils.loadCredentials(password, WALLET_PATH+fileName);
+				System.out.println("cred.getAddress(): "+cred.getAddress());
+				System.out.println("sendFunds.from: "+from);
+				System.out.println("sendFunds.to: "+to);
+				System.out.println("BigDecimal.valueOf(Integer.valueOf(value)): "+BigDecimal.valueOf(Integer.valueOf(value)));
+				TransactionReceipt transactionReceipt = Transfer.sendFunds(
+				        web3j, cred, to,
+				        BigDecimal.valueOf(Integer.valueOf(value)), Convert.Unit.ETHER).send();
 				processJson.put("from", from);
 				processJson.put("to", to);
-				processJson.put("txHash", transactionResponse.hashCode());
-				System.out.println("sendTransaction completed, txHash: "+transactionResponse.hashCode());
+				processJson.put("txHash", transactionReceipt.hashCode());
+				System.out.println("sendTransaction completed, transactionReceipt: "+transactionReceipt.toString());
+				System.out.println("sendTransaction completed, transactionReceipt.getGasUsed: "+transactionReceipt.getGasUsed().toString());
 //			}else {
 //				System.out.println("account is not unlocked yet");
 //			}
+		} catch (TransactionException e) {
+			e.printStackTrace();
+			System.out.println(e.getCause());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
